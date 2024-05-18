@@ -368,5 +368,19 @@ def logalpha_GRB_GW(theta_pop,pflim=3.5,inst='Fermi',pdet_GRB='gbm',pdet_GW='O3'
     alpha = np.trapz(np.trapz(np.trapz(PEpLz_GRBGW*Pdet*zg*Epg*Lg,np.log(z),axis=2),np.log(L),axis=1),np.log(Ep),axis=0)
     
     return np.log(alpha)
+
+
+def Plc(x,A):
+    """
+    Eq. (2) of the paper, where x=Lc/Lc*
+    """    
+    return A/(math.gamma(1-1/A))*(x)**(-A)*np.exp(-(1/x)**A)
+
+
+def Pepc(x,sigmac):
+    """
+    Eq. (3) of the paper, where x=Epc/tilde_Epc
+    """
     
+    return np.exp(-0.5*((np.log(x))**2/(sigmac))**2)/(np.sqrt(2*np.pi*sigmac**2))
     
