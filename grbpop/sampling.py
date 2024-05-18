@@ -1,44 +1,47 @@
-import math
 import numpy as np
-from scipy.integrate import quad 
 from .structjet import ell
 from .structjet import eta
 from .pflux import pflux_from_L
+import grbpop 
 
-def custom_cdf(x,probability_function):
-    cdf = np.zeros_like(x)
-    for i, val in enumerate(x):
-        integral, _ = quad(probability_function, 0.001, val)
-        cdf[i] = integral
-    return cdf
+from .Ppop import Plc
+from .Ppop import Pepc
+
+from scipy.integrate import cumtrapz
+
+e1 = grbpop.globals.e1
+e2 = grbpop.globals.e2
+
 
 def extract(probability_function, nsamples):
+    """
+    This fucntion extracts nsamples from a 
+    given probability function using the method 
+    of the cumulative distribution
+    """
 
-    x_values = np.logspace(np.log10(0.001), np.log10(1e3), num=int(1e2))  # Adjust the range as needed
+    x_values = np.logspace(np.log10(e1), np.log10(e2), num=int(1e2))  # Adjust the range as needed
 
-    cdf_values = custom_cdf(x_values,probability_function)
+    cdf_values = cumtrapz(probability_function(x_values),x_values, initial=0)
     
+    cdf_values /= cdf_values[-1]
+
     random_numbers = np.random.rand(nsamples)
     
     return np.interp(random_numbers, cdf_values, x_values)
 
 
 
-def p_lc(x,A):
-    
-    return A/(math.gamma(1-1/A))*(x)**(-A)*np.exp(-(1/x)**A)
-
-
-def p_ep(x,sigmac):
-    
-    return np.exp(-0.5*((np.log(x))**2/(sigmac))**2)/(np.sqrt(2*np.pi*sigmac**2))
-
-
 
     
 def extract_lc_ep(lc_star,A,epc_star,y,sigmac,nsamples):
-    
-    integral_func = lambda x: p_lc(x,A)
+
+    """
+    This fucntion extracts nsamples of Lc and Epc, 
+    defined in eqs. (2) and (3) of the paper.
+    """
+
+    integral_func = lambda x: Plc(x,A)
     
     l = extract(integral_func,nsamples)*lc_star
     
@@ -46,7 +49,7 @@ def extract_lc_ep(lc_star,A,epc_star,y,sigmac,nsamples):
     tilde_e = epc_star *(l/lc_star)**y
     
     
-    integral_func = lambda x: p_ep(x,sigmac)
+    integral_func = lambda x: Pepc(x,sigmac)
     
     ep = extract(integral_func,nsamples)*tilde_e
     
@@ -54,8 +57,15 @@ def extract_lc_ep(lc_star,A,epc_star,y,sigmac,nsamples):
 
 
 
-def p_flux_samples(z,th,x,plim,alpha,spe_model,inst,num):
+def p_flux_samples(z,thv,x,alpha,model,inst,num):
 
+    """
+    This fucntion extracts randomly num simulated peak fluxes,
+    once redshift, inclination angle, spectral model and instrument 
+    are defined. For each extraction from the hyper-parameters,
+    the corresponding Lc and Epc are extracted 1000 times. Therefore, 
+    the final sample of peak fluxes consists of 1000*num extractions.
+    """
     
 
     l_samples = []
@@ -85,17 +95,17 @@ def p_flux_samples(z,th,x,plim,alpha,spe_model,inst,num):
         l,ep = extract_lc_ep(theta_pop['Lc*'],theta_pop['A'],theta_pop['Epc*'],theta_pop['y'],theta_pop['s_c'],1000)
 
 
-        tildeL = l*ell(th,theta_pop)
-        tildeEp = ep*eta(th,theta_pop)
+        tildeL = l*ell(thv,theta_pop)
+        tildeEp = ep*eta(thv,theta_pop)
         
         l_samples.extend(tildeL)
         ep_samples.extend(tildeEp)
 
     p_flux = []
     for n in range(len(l_samples)):
-        p_flux.append(pflux_from_L(z,ep_samples[n],l_samples[n],alpha=alpha,model=spe_model,inst=inst))
+        p_flux.append(pflux_from_L(z,ep_samples[n],l_samples[n],alpha=alpha,model=model,inst=inst))
 
     p_flux = np.array(p_flux)
-    det_prob = np.sum(p_flux > plim)/len(p_flux)
+    # det_prob = np.sum(p_flux > plim)/len(p_flux)
 
-    return p_flux, det_prob
+    return p_flux
