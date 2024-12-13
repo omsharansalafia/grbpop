@@ -5,3 +5,5 @@ logLmax=56.
 logzmin=-3.
 logzmax=1.
 logthvmin=-5.
+e1 = 0.001
+e2 = 1000
