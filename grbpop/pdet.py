@@ -21,9 +21,9 @@ pdetGW_O4 = np.loadtxt(os.path.join(here,'GW_det_eff/GW_det_eff_O4_Colombo22.txt
 
 Itp_pdetGW_O4 = RegularGridInterpolator(points=(z_grid_GWO4,thv_grid_GWO4),values=gaussian_filter(pdetGW_O4,1.),bounds_error=False,fill_value=None)
 
-z_grid_GWO3 = np.loadtxt(os.path.join(here,'GW_det_eff/z_grid_O3.txt'))
-thv_grid_GWO3 = np.loadtxt(os.path.join(here,'GW_det_eff/thv_grid_O3.txt'))
-pdetGW_O3 = np.loadtxt(os.path.join(here,'GW_det_eff/GW_det_eff_O3.txt'))
+z_grid_GWO3 = np.load(os.path.join(here,'GW_det_eff/z_grid_O3.npy'))
+thv_grid_GWO3 = np.load(os.path.join(here,'GW_det_eff/thv_grid_O3.npy'))
+pdetGW_O3 = np.load(os.path.join(here,'GW_det_eff/GW_det_eff_O3.npy'))
 
 Itp_pdetGW_O3 = RegularGridInterpolator(points=(z_grid_GWO3,thv_grid_GWO3),values=gaussian_filter(pdetGW_O3,1.),bounds_error=False,fill_value=None)
 
